@@ -1,45 +1,47 @@
-#pragma once
+ï»¿#pragma once
 #include <condition_variable>
 #include <mutex>
 #include <atomic>
 
 namespace stdx
 {
-	//ÆÁÕÏ
+	//å±éšœ
 	class _Barrier
 	{
 	public:
-		//Ä¬ÈÏ¹¹Ôìº¯Êı
+		//é»˜è®¤æ„é€ å‡½æ•°
 		_Barrier()
 			:mutex(std::make_shared<std::mutex>())
 			, notify_count(0)
 			, cv(std::make_shared<std::condition_variable>())
 		{}
-		//Îö¹¹º¯Êı
-		~_Barrier()
-		{
-		}
+		//ææ„å‡½æ•°
+		~_Barrier() = default;
 
-		//µÈ´ıÍ¨¹ı
+		//ç­‰å¾…é€šè¿‡
+		//ç­‰å¾…é€šè¿‡
 		void wait()
 		{
-			std::unique_lock<std::mutex> lock(*mutex);
+			std::unique_lock<std::mutex> wait(*mutex);
 			auto &n = notify_count;
-			cv->wait(lock, [&n]() { return (int)n; });
+			cv->wait(wait, [&n]() { return (int)n; });
 			notify_count -= 1;
 		}
-		//Í¨¹ı
+
+		//é€šè¿‡
+		//é€šè¿‡
 		void pass()
 		{
-			cv->notify_one();
 			notify_count += 1;
+			this->cv->notify_one();
 		}
+
 		template<class _Rep,class _Period>
 			bool wait_for(const std::chrono::duration<_Rep, _Period> &time)
 		{
-			std::unique_lock<std::mutex> lock(*mutex);
+			std::unique_lock<std::mutex> wait(*mutex);
 			auto &n = notify_count;
-			if (cv->wait_for(lock, time, [&n]() { return (int)n; }))
+			if (cv->wait_for(wait, time, [&n]() { return (int)n; }))
 			{
 				notify_count -= 1;
 				return true;
@@ -58,14 +60,14 @@ namespace stdx
 	{
 		using impl_t = std::shared_ptr<stdx::_Barrier>;
 	public:
-		barrier()
+		barrier() 
 			:m_impl(std::make_shared<_Barrier>())
 		{}
-		barrier(const barrier &other)
+		barrier(const barrier &other) 
 			:m_impl(other.m_impl)
 		{}
-		barrier(barrier &&other)
-			:m_impl(std::move(other.m_impl))
+		barrier(barrier && other)
+			: m_impl(std::move(other.m_impl))
 		{}
 		~barrier() = default;
 		barrier &operator=(const barrier &other)

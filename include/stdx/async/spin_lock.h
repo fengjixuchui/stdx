@@ -9,23 +9,12 @@ namespace stdx
 	class _SpinLock
 	{
 	public:
-		_SpinLock()
-			:m_locked(false)
-		{}
+		_SpinLock();
 		~_SpinLock() = default;
 
-		void lock()
-		{
-			while (std::atomic_exchange_explicit(&m_locked, true, std::memory_order_acquire))
-			{
-				std::this_thread::yield();
-			}
-		}
+		void wait();
 
-		void unlock()
-		{
-			std::atomic_store_explicit(&m_locked, false, std::memory_order_release);
-		}
+		void unlock() noexcept;
 	private:
 		std::atomic_bool m_locked;
 	};
@@ -47,11 +36,11 @@ namespace stdx
 		{
 			m_impl = other.m_impl;
 		}
-		void lock()
+		void wait()
 		{
-			m_impl->lock();
+			m_impl->wait();
 		}
-		void unlock()
+		void unlock() noexcept
 		{
 			m_impl->unlock();
 		}
